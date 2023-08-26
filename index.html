@@ -1,0 +1,199 @@
+<html>
+    <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz@8..144&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    </head>
+    <body>
+        <style>
+            :root{
+                --slider1:70%;
+                --slider1Color:#FFFFFF;
+                --slider2:50%;
+                --slider2Color:#FFFFFF;
+                --modSlider1:70%;
+                --modSlider1Color:#FFFFFF;
+                --modSlider2:50%;
+                --modSlider2Color:#FFFFFF;
+            }
+            body{
+                background-color:black;
+            }
+            div{
+                position:absolute;
+            }
+
+            .slider{
+                top:10%;
+                width:10%;
+                bottom:10%;
+                border-radius:5vw;
+                border:solid 5px #FFFFFF
+            }
+            #slider1{
+                left:10%;
+                
+                background-color: hsl(28, 90%, calc(var(--slider1) - 5%));
+            }
+            #slider2{
+                right:10%;
+                background-color: hsl(28, 90%, calc(var(--slider2) - 5%));
+            }
+
+            .handle{
+                height:1%;
+                width:100%;
+                background-color: #888888;
+                mix-blend-mode:difference;
+                transform:translate(0,-50%);
+            }
+            #banner{
+                font-family: 'Roboto';
+                color:white;
+                font-weight:100;
+                text-align: center;
+                left:50%;
+                bottom:5%;
+                font-size:3em;
+                transform:translate(-50%,-50%)
+            }
+            .modSlider{
+                top:60%;
+                width:8%;
+                bottom:15%;
+                border-top:solid 5px #FFFFFF;
+                border-bottom:solid 5px #FFFFFF;
+            }
+            #modSlider1{
+                left:calc(20% + 5px);
+                
+                background: linear-gradient(to bottom, hsl(28, 100%, 70%) 35%, hsl(187, 100%, 60%) 100%);
+
+                border-top-right-radius:3vw;
+                border-bottom-right-radius:3vw;
+                border-right:solid 5px #FFFFFF;
+            }
+            #modSlider2{
+                right:calc(20% + 5px);
+                background: linear-gradient(to bottom, hsl(28, 100%, 70%) 35%, hsl(187, 100%, 60%) 100%);
+
+                border-top-left-radius:3vw;
+                border-bottom-left-radius:3vw;
+                border-left:solid 5px #FFFFFF;
+            }
+        </style>
+        <div class="slider" id="slider1">
+            <div class="handle" style="top:calc(95% - calc(var(--slider1)* .9));">
+
+            </div>
+        </div>
+        <div class="slider" id="slider2">
+            <div class="handle" style="top:calc(95% - calc(var(--slider2)* .9));">
+
+            </div>
+        </div>
+        <div class="modSlider" id="modSlider1">
+            <div class="handle" style="top:calc(95% - calc(var(--modSlider1)* .9));">
+
+            </div>
+        </div>
+        <div class="modSlider" id="modSlider2">
+            <div class="handle" style="top:calc(95% - calc(var(--modSlider2)* .9));">
+
+            </div>
+        </div>
+        <div id="banner">
+            _dormctrl<br>(drag the sliders)
+        </div>
+        <script>
+            const slider1 = document.getElementById('slider1');
+            const slider2 = document.getElementById('slider2');
+            const modSlider1 = document.getElementById('modSlider1');
+            const modSlider2 = document.getElementById('modSlider2');
+    
+            let isDragging1 = false;
+            let isDragging2 = false;
+            let isModDragging1 = false;
+            let isModDragging2 = false;
+    
+            slider1.addEventListener('mousedown', startDragging);
+            slider2.addEventListener('mousedown', startDragging);
+            modSlider1.addEventListener('mousedown', startModDragging);
+            modSlider2.addEventListener('mousedown', startModDragging);
+            
+            slider1.addEventListener('touchstart', startDragging);
+            slider2.addEventListener('touchstart', startDragging);
+            modSlider1.addEventListener('touchstart', startModDragging);
+            modSlider2.addEventListener('touchstart', startModDragging);
+    
+            function startDragging(e) {
+                e.preventDefault();
+                if (e.type === 'mousedown') {
+                    isDragging1 = e.target === slider1;
+                    isDragging2 = e.target === slider2;
+                } else if (e.type === 'touchstart') {
+                    isDragging1 = e.target === slider1 || slider1.contains(e.target);
+                    isDragging2 = e.target === slider2 || slider2.contains(e.target);
+                }
+            }
+            
+            function startModDragging(e) {
+                e.preventDefault();
+                if (e.type === 'mousedown') {
+                    isModDragging1 = e.target === modSlider1;
+                    isModDragging2 = e.target === modSlider2;
+                } else if (e.type === 'touchstart') {
+                    isModDragging1 = e.target === modSlider1 || modSlider1.contains(e.target);
+                    isModDragging2 = e.target === modSlider2 || modSlider2.contains(e.target);
+                }
+            }
+    
+            document.addEventListener('touchmove', handleDrag);
+    
+            function handleDrag(e) {
+                if (isDragging1 || isDragging2 || isModDragging1 || isModDragging2) {
+                    e.preventDefault();
+                    const mouseY = e.clientY || e.touches[0].clientY;
+                    const slider1Rect = slider1.getBoundingClientRect();
+                    const slider2Rect = slider2.getBoundingClientRect();
+                    const modSlider1Rect = modSlider1.getBoundingClientRect();
+                    const modSlider2Rect = modSlider2.getBoundingClientRect();
+    
+                    if (isDragging1) {
+                        const newPosition = Math.min(100, Math.max(0, ((slider1Rect.bottom - mouseY) / slider1Rect.height) * 100));
+                        document.documentElement.style.setProperty('--slider1', newPosition + '%');
+                        slider1.querySelector('.handle').style.top = `calc(95% - calc(var(--slider1)* .9))`;
+                    }
+    
+                    if (isDragging2) {
+                        const newPosition = Math.min(100, Math.max(0, ((slider2Rect.bottom - mouseY) / slider2Rect.height) * 100));
+                        document.documentElement.style.setProperty('--slider2', newPosition + '%');
+                        slider2.querySelector('.handle').style.top = `calc(95% - calc(var(--slider2)* .9))`;
+                    }
+    
+                    if (isModDragging1) {
+                        const newPosition = Math.min(100, Math.max(0, ((modSlider1Rect.bottom - mouseY) / modSlider1Rect.height) * 100));
+                        document.documentElement.style.setProperty('--modSlider1', newPosition + '%');
+                        modSlider1.querySelector('.handle').style.top = `calc(95% - calc(var(--modSlider1)* .9))`;
+                    }
+    
+                    if (isModDragging2) {
+                        const newPosition = Math.min(100, Math.max(0, ((modSlider2Rect.bottom - mouseY) / modSlider2Rect.height) * 100));
+                        document.documentElement.style.setProperty('--modSlider2', newPosition + '%');
+                        modSlider2.querySelector('.handle').style.top = `calc(95% - calc(var(--modSlider2)* .9))`;
+                    }
+                }
+            }
+    
+            document.addEventListener('mouseup', stopDragging);
+            document.addEventListener('touchend', stopDragging);
+    
+            function stopDragging() {
+                isDragging1 = false;
+                isDragging2 = false;
+                isModDragging1 = false;
+                isModDragging2 = false;
+            }
+        </script>
+    </body>
+</html>
