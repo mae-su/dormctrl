@@ -1,22 +1,17 @@
-from collections import OrderedDict
-from datetime import datetime
+
 from twisted.internet import endpoints, reactor
-from twisted.internet.protocol import Factory, Protocol
-from twisted.protocols.basic import LineReceiver
+from twisted.internet.protocol import Factory
 from twisted.web import resource, server, static
 import json 
 import serial
 import time
-
+from rich import print
 # Global variables
 update_timestamp = 0
 update_interval = 0.01
-currentParams = [0, 100, 0, 50]
 brightness_slider = None
 white_balance_slider = None
 arduino = None
-
-permissionsJSONData = {}
 redwhite = "\033[25;33;49m"
 homecursor = "\033[H"
 clearscreen = "\033[J"
@@ -28,7 +23,7 @@ unul = "\033[24m"
 boldul = bold + ul
 unboldul = unbold + unul
 end = "\033[0m"
-currentParams = [0,100]
+currentParams = [20,100,0]
 
 class Simple(resource.Resource):
     isLeaf = True
@@ -39,14 +34,14 @@ class Simple(resource.Resource):
     
     def render_GET(self, request):
         file_path =  b"./" + str(request.path.decode()).encode()
-        print("\x1b[3m\x1b[90m" + str(request.path).replace("b","") + " served as " + str(file_path).replace("b","") + end)
+        
+        print(str(request.path).replace("b","") + " served as " + str(file_path).replace("b",""))
         return static.File(file_path).getContent()
 
     def render_POST(self, request):
         request.setHeader(b"Access-Control-Allow-Origin", b"*")
         content = str(request.content.read().decode("utf-8"))
         resp = self.postHandler(content)
-        # print(content + " --> " + str(resp))
         return str(str(resp)).encode()
     
     def postHandler(self, content):
@@ -54,31 +49,41 @@ class Simple(resource.Resource):
         if "Ping" in content:
             return "Cur" + str(currentParams)
         elif "Set[" in content:
-            print(content.replace('Set','').replace('%','').replace(' ',''))
+            # print(content.replace('Set','').replace('%','').replace(' ',''))
             currentParams = json.loads((content.replace('Set','').replace('%','').replace(' ','')))
-
-            updateStrip()
+            updateStrip(input_brightness=currentParams[0],input_wb = currentParams[1])
             return "OK"
         elif "Custom;" in content:
             arduino.write(content.split(';')[1].encode())
+        elif "pwrOn" in content:
+            print(f'Powering on to parameters {currentParams}')
+            currentParams[2] = 1  
+            fadeStrip(0,currentParams[0],50,currentParams[1],0.5)
+            return "OK"
+        elif "pwrOff" in content:
+            currentParams[2] = 0
+            if currentParams[0] < 3: #some tolerance for minor brightness update errors
+                currentParams[0] = 20
+                currentParams[1] = 100
+                updateStrip(input_brightness=0,input_wb=0,rate_limit=0)
+            
+            else:
+                fadeStrip(currentParams[0],0,currentParams[1],50,0.5)
             return "OK"
         else:
             return "OK"
 
-def interpolate_color(color1, color2, ratio):
-    interpolated_color = [int(c1 * (1 - ratio) + c2 * ratio) for c1, c2 in zip(color1, color2)]
-    return interpolated_color
-
-def updateStrip():
+def updateStrip(rate_limit = update_interval, input_brightness=currentParams[0],input_wb = currentParams[1]):
     global update_timestamp
     current_time = time.time()
-    if current_time - update_timestamp < update_interval:
-        print("Rate limit exceeded. Skipping update.")
+    if current_time - update_timestamp < rate_limit:
+        pass
+        # print("Rate limit exceeded. Skipping update.")
     else:
         update_timestamp = current_time
         # Your existing updateStrip() logic here
-        brightness = currentParams[0] * 2.551
-        wb = currentParams[1]
+        brightness = input_brightness * 2.551
+        wb = input_wb
         if wb < 50:
             cw = int(brightness)
         else:
@@ -87,17 +92,30 @@ def updateStrip():
             ww = int((5.1 * brightness / 255) * wb)
         else:
             ww = int(brightness)
-        print(f"ww: {ww}, cw: {cw}")
+        print(f"Channels interpolated | Warm: {ww}, Cool: {cw}")
         write = f'C {ww} {cw}'
         arduino.write(write.encode())
-        # print(write)
+
+def fadeStrip(pre1, post1, pre2, post2, period):
+    delta1 = post1 - pre1
+    delta2 = post2 - pre2
+    steps = 255  # Define the number of steps for the fade
+    delay_interval = period / steps
+    for i in range(steps):
+        time.sleep(delay_interval)  # Sleep for the fraction of the period
+        step_ratio = i / (steps - 1)  # Use steps - 1 to get the correct ratio
+        current_brightness = pre1 + (delta1 * step_ratio)
+        current_wb = pre2 + (delta2 * step_ratio)
+        updateStrip(input_brightness=current_brightness, input_wb=current_wb,rate_limit=0.005)
+    time.sleep(delay_interval)
+    updateStrip(input_brightness=post1, input_wb=post2,rate_limit=0)
 
 def main():
     print("[_dormctrl] Starting...")
     
     global arduino
     
-    arduino = serial.Serial('COM4', 115200, timeout=1)
+    arduino = serial.Serial('COM3', 115200, timeout=1)
     print("[_dormctrl] Communication port opened successfully.")
     
     f = Factory()

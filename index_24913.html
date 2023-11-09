@@ -4,28 +4,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz@8..144&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
     </head>
-    <body>
+    <body class="_power_off disable-dbl-tap-zoom">
         <style>
             :root{
                 --slider1:0%;
                 --slider1Color:#FFFFFF;
-                --slider2:50%;
-                --slider2Color:#FFFFFF;
                 --modSlider1:50%;
                 --modSlider1Color:#FFFFFF;
-                --modSlider2:50%;
-                --modSlider2Color:#FFFFFF;
             }
             body{
                 background-color:black;
             }
             div{
                 position:absolute;
-                /* transition:all 0.1s linear; */
+                transition:all 0.5s linear;
             }
-
             .slider{
-                top:10%;
+                top:5%;
                 width:10%;
                 bottom:10%;
                 border-radius:5vw;
@@ -33,21 +28,21 @@
             }
             #slider1{
                 left:50%;
-                transform:translate(-50%,0);
+                transform:translateX(-50%);
                 background-color: hsl(28, 90%, calc(var(--slider1) - 5%));
             }
-            #slider2{
-                visibility:hidden;
-                right:10%;
-                background-color: hsl(28, 90%, calc(var(--slider2) - 5%));
-            }
-
             .handle{
+                transition:opacity 0.5s;
                 height:1%;
                 width:100%;
-                background-color: #888888;
+                opacity:1;
+                background-color: #484848;
                 mix-blend-mode:difference;
-                transform:translate(0,-50%);
+                transform:translateY(-50%);
+                border-radius:5px;
+            }
+            ._power_off .handle{
+                opacity:0;
             }
             #banner{
                 font-family: 'Roboto';
@@ -67,41 +62,49 @@
                 border-bottom:solid 5px #FFFFFF;
             }
             #modSlider1{
+                
                 left:calc(60% + 5px);
                 transform:translate(-50%,0);
                 background: linear-gradient(to bottom, hsl(28, 100%, 70%) 35%, hsl(187, 100%, 60%) 100%);
-
                 border-top-right-radius:3vw;
                 border-bottom-right-radius:3vw;
                 border-right:solid 5px #FFFFFF;
             }
-            #modSlider2{
-                visibility:hidden;
-                right:calc(20% + 5px);
-                background: linear-gradient(to bottom, hsl(28, 100%, 70%) 35%, hsl(187, 100%, 60%) 100%);
-
-                border-top-left-radius:3vw;
-                border-bottom-left-radius:3vw;
-                border-left:solid 5px #FFFFFF;
+            #power-button{
+                transition:opacity 0.5s;
+                position:relative;
+                fill:white;
+                opacity:0;
             }
+            ._power_off #power-button{
+                opacity:0.6;
+            }
+            #power-button-container{
+                pointer-events:none;
+                position:absolute;
+                fill:white;
+                top:50%;
+                width:10%;
+                height:10%;
+                left:50%;
+                transform:translate(-50%,-50%);
+                z-index:3
+            }
+            ._power_off #power-button{
+                pointer-events:all;
+            }
+            .disable-dbl-tap-zoom { /*source: https://stackoverflow.com/a/53236027*/
+            touch-action: manipulation;
+            }
+            
         </style>
-        <div class="slider" id="slider1">
-            <div class="handle" style="top:calc(95% - calc(var(--slider1)* .9));">
-
-            </div>
+        <div class="slider" id="slider1" ondblclick="powerOff()">
+            <div class="handle" style="top:calc(95% - calc(var(--slider1)* .9));"></div>
         </div>
-        <div class="slider" id="slider2">
-            <div class="handle" style="top:calc(95% - calc(var(--slider2)* .9));">
-
-            </div>
-        </div>
+        <div id="power-button-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" id="power-button" onclick="powerOn()"><path d="M19.9 18.9c-.6 0-1-.4-1-1V2.3c0-.6.4-1 1-1s1 .4 1 1v15.5c0 .6-.5 1.1-1 1.1z"></path><path d="M19.9 38.3c-8.3 0-15-6.7-15-15 0-6.6 4.4-12.5 10.7-14.4.5-.2 1.1.1 1.2.7.2.5-.1 1.1-.7 1.2-5.5 1.6-9.3 6.8-9.3 12.5 0 7.2 5.8 13 13 13s13-5.8 13-13c0-5.7-3.6-10.7-9.1-12.4-.5-.2-.8-.7-.7-1.3.2-.5.7-.8 1.3-.7 6.3 2 10.5 7.7 10.5 14.3.1 8.4-6.6 15.1-14.9 15.1z"></path></svg></div>
         <div class="modSlider" id="modSlider1">
             <div class="handle" style="top:calc(95% - calc(var(--modSlider1)* .9));">
-
-            </div>
-        </div>
-        <div class="modSlider" id="modSlider2">
-            <div class="handle" style="top:calc(95% - calc(var(--modSlider2)* .9));">
 
             </div>
         </div>
